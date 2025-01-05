@@ -39,7 +39,7 @@ sudo ./lamp_installer.sh
 ### 2. Ikuti Menu Utama
 Saat menjalankan script, Anda akan melihat menu berikut:
 
-![Alt text](https://github.com/RafiNashirudin/centos-lamp-installer/image/Menu.png)
+![Alt text](https://github.com/RafiNashirudin/centos-lamp-installer/tree/main/Image/Menu.png)
 
 ### 3. Pilih Opsi
 - **Opsi 1:** Memperbarui sistem Anda ke versi terbaru.  
