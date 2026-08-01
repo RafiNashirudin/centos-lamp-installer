@@ -3,7 +3,7 @@
 # ==========================================
 # KONFIGURASI & VARIABEL UTAMA
 # ==========================================
-VERSION="1.1"
+VERSION="1.2"
 AUTHOR="Rafi Nashirudin"
 HOMEPAGE="rafinashirudin.my.id"
 OS_COMPAT="CentOS Stream 9"
@@ -17,6 +17,7 @@ EPEL_NEXT_URL="https://dl.fedoraproject.org/pub/epel/epel-next-release-latest-9.
 # Kode Warna Terminal
 RED="\033[1;31m"
 GREEN="\033[1;32m"
+YELLOW="\033[1;33m"
 BLUE="\033[1;34m"
 CYAN="\033[1;36m"
 NC="\033[0m"
@@ -42,6 +43,10 @@ function info {
     echo -e "${BLUE}[INFO] $1${NC}"
 }
 
+function warn {
+    echo -e "${YELLOW}[SKIP] $1${NC}"
+}
+
 function check_status {
     if [ $? -ne 0 ]; then
         echo -e "${RED}[ERROR] $1${NC}"
@@ -57,6 +62,12 @@ function confirm {
         y|Y) return 0 ;;
         *) return 1 ;;
     esac
+}
+
+# Fungsi Pengecekan Paket
+function is_installed {
+    rpm -q "$1" > /dev/null 2>&1
+    return $?
 }
 
 # Pengecekan Hak Akses Root
@@ -80,47 +91,72 @@ function update_system {
 
 function install_packages {
     banner
-    info "Memulai instalasi LAMP Stack & phpMyAdmin..."
+    info "Memulai instalasi LAMP Stack & phpMyAdmin...\n"
 
-    # Instalasi PHP
-    info "Menginstal PHP ${PHP_VERSION}..."
-    dnf install -y https://rpms.remirepo.net/enterprise/remi-release-9.rpm > /dev/null 2>&1
-    dnf module reset php -y > /dev/null 2>&1
-    dnf module install -y php:remi-${PHP_VERSION} > /dev/null 2>&1
-    check_status "Gagal menginstal PHP." || return
+    # 1. Pengecekan & Instalasi PHP
+    if is_installed "php"; then
+        warn "PHP sudah terinstal. Melewati instalasi PHP..."
+    else
+        info "Menginstal PHP ${PHP_VERSION}..."
+        dnf install -y https://rpms.remirepo.net/enterprise/remi-release-9.rpm > /dev/null 2>&1
+        dnf module reset php -y > /dev/null 2>&1
+        dnf module install -y php:remi-${PHP_VERSION} > /dev/null 2>&1
+        check_status "Gagal menginstal PHP." || return
+    fi
 
-    # Instalasi Apache
-    info "Menginstal Apache HTTP Server..."
-    dnf install -y httpd > /dev/null 2>&1
-    check_status "Gagal menginstal Apache." || return
-    
-    firewall-cmd --add-service=http --permanent > /dev/null 2>&1
-    firewall-cmd --add-service=https --permanent > /dev/null 2>&1
-    firewall-cmd --reload > /dev/null 2>&1
-    
+    # 2. Pengecekan & Instalasi Apache
+    if is_installed "httpd"; then
+        warn "Apache (httpd) sudah terinstal. Melewati instalasi Apache..."
+    else
+        info "Menginstal Apache HTTP Server..."
+        dnf install -y httpd > /dev/null 2>&1
+        check_status "Gagal menginstal Apache." || return
+    fi
     systemctl enable --now httpd > /dev/null 2>&1
     
-    # Instalasi MySQL
-    info "Menginstal MySQL Server..."
-    dnf install -y ${MYSQL_REPO_URL} > /dev/null 2>&1
-    dnf install -y mysql-community-server > /dev/null 2>&1
-    check_status "Gagal menginstal MySQL." || return
+    # 3. Pengecekan & Konfigurasi Firewall
+    if command -v firewall-cmd > /dev/null 2>&1; then
+        info "Mengonfigurasi Firewalld untuk HTTP/HTTPS..."
+        firewall-cmd --add-service=http --permanent > /dev/null 2>&1
+        firewall-cmd --add-service=https --permanent > /dev/null 2>&1
+        firewall-cmd --reload > /dev/null 2>&1
+    else
+        warn "Firewalld tidak ditemukan. Melewati konfigurasi firewall..."
+    fi
     
+    # 4. Pengecekan & Instalasi MySQL
+    if is_installed "mysql-community-server" || is_installed "mariadb-server"; then
+        warn "MySQL/MariaDB Server sudah terinstal. Melewati instalasi database..."
+    else
+        info "Menginstal MySQL Server..."
+        dnf install -y ${MYSQL_REPO_URL} > /dev/null 2>&1
+        dnf install -y mysql-community-server > /dev/null 2>&1
+        check_status "Gagal menginstal MySQL." || return
+    fi
     systemctl enable --now mysqld > /dev/null 2>&1
 
-    # Instalasi phpMyAdmin
-    info "Menginstal phpMyAdmin..."
-    dnf config-manager --set-enabled crb > /dev/null 2>&1
-    dnf install -y ${EPEL_REPO_URL} ${EPEL_NEXT_URL} > /dev/null 2>&1
-    dnf install -y phpmyadmin > /dev/null 2>&1
-    check_status "Gagal menginstal phpMyAdmin." || return
+    # 5. Pengecekan & Instalasi phpMyAdmin
+    if is_installed "phpmyadmin"; then
+        warn "phpMyAdmin sudah terinstal. Melewati instalasi phpMyAdmin..."
+    else
+        info "Menginstal phpMyAdmin..."
+        dnf config-manager --set-enabled crb > /dev/null 2>&1
+        dnf install -y ${EPEL_REPO_URL} ${EPEL_NEXT_URL} > /dev/null 2>&1
+        dnf install -y phpmyadmin > /dev/null 2>&1
+        check_status "Gagal menginstal phpMyAdmin." || return
+    fi
 
-    # Konfigurasi Akses phpMyAdmin
-    sed -i '/Require local/a\   Require all granted' /etc/httpd/conf.d/phpMyAdmin.conf
+    # Konfigurasi Akses phpMyAdmin (Mencegah duplikasi baris Require all granted)
+    if ! grep -q "Require all granted" /etc/httpd/conf.d/phpMyAdmin.conf 2>/dev/null; then
+        sed -i '/Require local/a\   Require all granted' /etc/httpd/conf.d/phpMyAdmin.conf
+    fi
     systemctl restart httpd > /dev/null 2>&1
 
-    # Mengambil Password Sementara MySQL
-    TEMP_PASS=$(grep 'temporary password' /var/log/mysqld.log | awk '{print $NF}')
+    # Mengambil Password Sementara MySQL (Mencegah error jika password sudah dihapus/diganti user)
+    TEMP_PASS=$(grep 'temporary password' /var/log/mysqld.log 2>/dev/null | awk '{print $NF}')
+    if [ -z "$TEMP_PASS" ]; then
+        TEMP_PASS="(Tidak ditemukan / Sudah diubah)"
+    fi
     
     echo -e "\n========================================================"
     echo -e "${GREEN}Instalasi Selesai!${NC}"
