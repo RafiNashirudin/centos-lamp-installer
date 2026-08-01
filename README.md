@@ -1,83 +1,103 @@
-# LAMP Stack & phpMyAdmin Installer Script
+# LAMP Stack Installer v1.2
 
-## Pendahuluan
-Script ini dirancang untuk mempermudah instalasi dan pengelolaan **LAMP Stack (Linux, Apache, MySQL, PHP)** dan **phpMyAdmin** pada sistem operasi **CentOS Stream 9**. Anda dapat menggunakan script ini untuk:
+Installer sederhana untuk **CentOS Stream 9** yang membantu menginstal, memperbarui, dan menghapus **Apache, PHP, MySQL Community Server,** serta **phpMyAdmin** melalui menu interaktif.
 
-1. Memperbarui sistem.
-2. Menginstal LAMP Stack dan phpMyAdmin.
-3. Menghapus LAMP Stack dan phpMyAdmin.
+---
 
 ## Fitur
-1. **Memperbarui Sistem**  
-   Menggunakan `dnf update` untuk memperbarui semua paket yang ada.
-   
-2. **Instalasi LAMP Stack & phpMyAdmin**  
-   - PHP (versi 8.2 melalui Remi Repository).
-   - Apache HTTP Server.
-   - MySQL (versi 8.4 melalui MySQL Community Repository).
-   - phpMyAdmin untuk pengelolaan database berbasis web.
 
-3. **Penghapusan LAMP Stack & phpMyAdmin**  
-   Menghapus semua layanan dan paket terkait, termasuk file konfigurasi dan data yang tersimpan.
+- Update sistem menggunakan DNF
+- Install Apache HTTP Server
+- Install PHP 8.3 (Remi Repository)
+- Install MySQL Community Server 8.4
+- Install phpMyAdmin
+- Konfigurasi Firewall HTTP & HTTPS
+- Mengaktifkan service Apache dan MySQL secara otomatis
+- Uninstall seluruh LAMP Stack beserta data MySQL
+
+---
 
 ## Persyaratan
-- Sistem operasi **CentOS Stream 9**.
-- Hak akses **root** atau menjalankan script dengan `sudo`.
 
-## Cara Penggunaan
+- CentOS Stream 9
+- Akses **root** atau **sudo**
+- Koneksi internet
 
-### 1. Unduh dan Jalankan Script
-Salin isi script ini ke sebuah file bernama `lamp_installer.sh`. Kemudian berikan izin eksekusi:
+---
+
+## Instalasi
+
+Berikan izin eksekusi:
+
 ```bash
 chmod +x lamp_installer.sh
 ```
-Jalankan script:
+
+Jalankan installer:
+
 ```bash
 sudo ./lamp_installer.sh
 ```
 
-### 2. Ikuti Menu Utama
-Saat menjalankan script, Anda akan melihat menu berikut:
-
-![alt text](https://github.com/RafiNashirudin/centos-lamp-installer/blob/main/Image/Menu.png?raw=true)
-
-### 3. Pilih Opsi
-- **Opsi 1:** Memperbarui sistem Anda ke versi terbaru.  
-- **Opsi 2:** Menginstal LAMP Stack dan phpMyAdmin.  
-- **Opsi 3:** Menghapus semua komponen LAMP Stack dan phpMyAdmin dari sistem.  
-- **Opsi 4:** Keluar dari script.
-
 ---
 
-## Akses phpMyAdmin
-Setelah instalasi selesai, Anda dapat mengakses phpMyAdmin melalui browser di:
+## Menu
+
 ```
-http://localhost/phpmyadmin
+1. Update Sistem
+2. Install LAMP Stack & phpMyAdmin
+3. Hapus LAMP Stack & phpMyAdmin
+4. Keluar
 ```
 
 ---
 
-## Informasi Tambahan
-- **Password Root MySQL**  
-  Setelah instalasi MySQL, password root sementara akan ditampilkan di terminal.
+## Setelah Instalasi
 
-- **Pengamanan MySQL**  
-  Script akan secara otomatis menjalankan `mysql_secure_installation` untuk meningkatkan keamanan MySQL.
+Akses phpMyAdmin melalui browser:
 
----
-
-## Catatan Penting
-- Pastikan Anda menjalankan script ini dengan hak akses **root**.
-- Pastikan sistem Anda memiliki koneksi internet yang stabil untuk mengunduh paket.
-
----
-
-## Kontributor
-- **Author:** Rafi Nashirudin  
-- **Homepage:** [rafinashirudin.my.id](https://www.rafinashirudin.my.id)  
-- Dibuat dengan bantuan **ChatGPT**.
-
----
-
-Semoga bermanfaat! 🚀
 ```
+http://IP_SERVER/phpmyadmin
+```
+
+Password sementara MySQL akan ditampilkan di terminal.
+
+Amankan instalasi MySQL dengan menjalankan:
+
+```bash
+mysql_secure_installation
+```
+
+---
+
+## Yang Diinstal
+
+- Apache HTTP Server
+- PHP 8.3
+- MySQL Community Server 8.4
+- phpMyAdmin
+- EPEL Repository
+- Remi Repository
+
+---
+
+## Changelog
+
+### v1.2
+
+- Menggunakan PHP 8.3
+- Menggunakan MySQL Community Server 8.4
+- Pengecekan paket sebelum instalasi
+- Konfigurasi Firewalld otomatis
+- Mengaktifkan service otomatis
+- Perbaikan proses uninstall
+- Perbaikan tampilan menu
+- Optimasi penanganan error
+
+---
+
+## Author
+
+**Rafi Nashirudin**
+
+🌐 https://rafinashirudin.my.id
